@@ -45,7 +45,10 @@ The generated query will be used to send a graphQl api request without manual in
  }
 ```
 
-**User Request:** "Get user details along with their posts for a given user ID."
+**User Request:** 
+"Fetch all users
+ including id, name, email  
+ and id, title from posts"
 
 **Generated Query:**
 ```

@@ -20,3 +20,6 @@ def validate_graphql_query(query: str, schema_str: str):
 
     except GraphQLError as e:
         return f"Error parsing or validating the query: {str(e)}"
+    
+def get_escaped_validation_result(validation_result):
+    return validation_result.replace("{", "{{").replace("}", "}}")

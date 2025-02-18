@@ -1,6 +1,6 @@
 bill_schema_graphql = """
 schema {
-  query: BillQuery
+  query: Query
 }
 type Account {
   id: Int!
@@ -9,7 +9,10 @@ type Account {
   type: AccountType!
   customerId: Int!
   customer: Customer!
-  bills(where: BillFilterInput order: [BillSortInput!]): [Bill!]!
+  bills(
+    where: BillFilterInput 
+    order: [BillSortInput!] 
+  ): [Bill!]!
 }
 type Bill {
   id: Int!
@@ -24,14 +27,11 @@ type Bill {
   accountId: Int!
   account: Account!
 }
-type BillQuery {
-  bills( first: Int  after: String  last: Int  before: String where: BillFilterInput order: [BillSortInput!]): BillsConnection
-}
 type BillsConnection {
   pageInfo: PageInfo!
   edges: [BillsEdge!]
   nodes: [Bill!]
-  totalCount: Int!
+  totalCount: Int! 
 }
 type BillsEdge {
   cursor: String!
@@ -42,14 +42,30 @@ type Customer {
   name: String!
   identityNumber: Int!
   age: Int!
-  accounts(where: AccountFilterInput order: [AccountSortInput!]): [Account!]!
-  bills(where: BillFilterInput order: [BillSortInput!]): [Bill!]!
+  accounts(
+    where: AccountFilterInput 
+    order: [AccountSortInput!] 
+  ): [Account!]!
+  bills(
+    where: BillFilterInput 
+    order: [BillSortInput!] 
+  ): [Bill!]!
 }
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
   endCursor: String
+}
+type Query {
+  bills(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    where: BillFilterInput 
+    order: [BillSortInput!] 
+  ): BillsConnection
 }
 input AccountFilterInput {
   and: [AccountFilterInput!]
@@ -63,18 +79,18 @@ input AccountFilterInput {
   bills: ListFilterInputTypeOfBillFilterInput
 }
 input AccountSortInput {
-  id: SortEnumType
-  number: SortEnumType
-  isActive: SortEnumType
-  type: SortEnumType
-  customerId: SortEnumType
-  customer: CustomerSortInput
+  id: SortEnumType 
+  number: SortEnumType 
+  isActive: SortEnumType 
+  type: SortEnumType 
+  customerId: SortEnumType 
+  customer: CustomerSortInput 
 }
 input AccountTypeOperationFilterInput {
-  eq: AccountType
-  neq: AccountType
-  in: [AccountType!]
-  nin: [AccountType!]
+  eq: AccountType 
+  neq: AccountType 
+  in: [AccountType!] 
+  nin: [AccountType!] 
 }
 input BillFilterInput {
   and: [BillFilterInput!]
@@ -92,21 +108,21 @@ input BillFilterInput {
   account: AccountFilterInput
 }
 input BillSortInput {
-  id: SortEnumType
-  number: SortEnumType
-  month: SortEnumType
-  isActive: SortEnumType
-  status: SortEnumType
-  dueDate: SortEnumType
-  amount: SortEnumType
-  customerId: SortEnumType
-  customer: CustomerSortInput
-  accountId: SortEnumType
-  account: AccountSortInput
+  id: SortEnumType 
+  number: SortEnumType 
+  month: SortEnumType 
+  isActive: SortEnumType 
+  status: SortEnumType 
+  dueDate: SortEnumType 
+  amount: SortEnumType 
+  customerId: SortEnumType 
+  customer: CustomerSortInput 
+  accountId: SortEnumType 
+  account: AccountSortInput 
 }
 input BooleanOperationFilterInput {
-  eq: Boolean
-  neq: Boolean
+  eq: Boolean 
+  neq: Boolean 
 }
 input CustomerFilterInput {
   and: [CustomerFilterInput!]
@@ -119,90 +135,90 @@ input CustomerFilterInput {
   bills: ListFilterInputTypeOfBillFilterInput
 }
 input CustomerSortInput {
-  id: SortEnumType
-  name: SortEnumType
-  identityNumber: SortEnumType
-  age: SortEnumType
+  id: SortEnumType 
+  name: SortEnumType 
+  identityNumber: SortEnumType 
+  age: SortEnumType 
 }
 input DateOperationFilterInput {
-  eq: Date
-  neq: Date
-  in: [Date]
-  nin: [Date]
-  gt: Date
-  ngt: Date
-  gte: Date
-  ngte: Date
-  lt: Date
-  nlt: Date
-  lte: Date
-  nlte: Date
+  eq: Date 
+  neq: Date 
+  in: [Date] 
+  nin: [Date] 
+  gt: Date 
+  ngt: Date 
+  gte: Date 
+  ngte: Date 
+  lt: Date 
+  nlt: Date 
+  lte: Date 
+  nlte: Date 
 }
 input DecimalOperationFilterInput {
-  eq: Decimal
-  neq: Decimal
-  in: [Decimal]
-  nin: [Decimal]
-  gt: Decimal
-  ngt: Decimal
-  gte: Decimal
-  ngte: Decimal
-  lt: Decimal
-  nlt: Decimal
-  lte: Decimal
-  nlte: Decimal
+  eq: Decimal 
+  neq: Decimal 
+  in: [Decimal] 
+  nin: [Decimal] 
+  gt: Decimal 
+  ngt: Decimal 
+  gte: Decimal 
+  ngte: Decimal 
+  lt: Decimal 
+  nlt: Decimal 
+  lte: Decimal 
+  nlte: Decimal 
 }
 input IntOperationFilterInput {
-  eq: Int
-  neq: Int
-  in: [Int]
-  nin: [Int]
-  gt: Int
-  ngt: Int
-  gte: Int
-  ngte: Int
-  lt: Int
-  nlt: Int
-  lte: Int
-  nlte: Int
+  eq: Int 
+  neq: Int 
+  in: [Int] 
+  nin: [Int] 
+  gt: Int 
+  ngt: Int 
+  gte: Int 
+  ngte: Int 
+  lt: Int 
+  nlt: Int 
+  lte: Int 
+  nlte: Int 
 }
 input ListFilterInputTypeOfAccountFilterInput {
-  all: AccountFilterInput
-  none: AccountFilterInput
-  some: AccountFilterInput
-  any: Boolean
+  all: AccountFilterInput 
+  none: AccountFilterInput 
+  some: AccountFilterInput 
+  any: Boolean 
 }
 input ListFilterInputTypeOfBillFilterInput {
-  all: BillFilterInput
-  none: BillFilterInput
-  some: BillFilterInput
-  any: Boolean
+  all: BillFilterInput 
+  none: BillFilterInput 
+  some: BillFilterInput 
+  any: Boolean 
 }
 input MonthOperationFilterInput {
-  eq: Month
-  neq: Month
-  in: [Month!]
-  nin: [Month!]
+  eq: Month 
+  neq: Month 
+  in: [Month!] 
+  nin: [Month!] 
 }
 input StatusOperationFilterInput {
-  eq: Status
-  neq: Status
-  in: [Status!]
-  nin: [Status!]
+  eq: Status 
+  neq: Status 
+  in: [Status!] 
+  nin: [Status!] 
 }
 input StringOperationFilterInput {
   and: [StringOperationFilterInput!]
   or: [StringOperationFilterInput!]
-  eq: String
-  neq: String
-  contains: String
-  ncontains: String
-  in: [String]
-  nin: [String]
-  startsWith: String
-  nstartsWith: String
-  endsWith: String
-  nendsWith: String
+  eq: String 
+  neq: String 
+  contains: String 
+  ncontains: String 
+  in: [String] 
+  nin: [String] 
+  startsWith: String 
+  nstartsWith: String 
+  endsWith: String 
+  nendsWith: String 
 }
 enum AccountType {
   DOMESTIC
@@ -230,6 +246,8 @@ enum Status {
   PAID
   NOT_PAID
 }
+scalar Date
+scalar Decimal
 """
 
 escaped_bill_schema_graphql = bill_schema_graphql.replace("{", "{{").replace("}", "}}")

@@ -1,9 +1,3 @@
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
-import json
-
 # def flatten_record(record, sep='.'):
 #     """
 #     Iteratively flattens nested dictionaries for better performance.
@@ -22,6 +16,14 @@ import json
 
 #     return flat_dict
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A3
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+import json
+
 def flatten_record(record, parent_key='', sep='.'):
     """
     Recursively flattens nested dictionaries.
@@ -35,6 +37,16 @@ def flatten_record(record, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
+def calculate_column_widths(headers, font_name='Helvetica', font_size=10):
+    """
+    Calculate the width of each column based on the header title length.
+    """
+    widths = []
+    for header in headers:
+        width = pdfmetrics.stringWidth(header, font_name, font_size)
+        widths.append(width + 10)  # Add some padding
+    return widths
+
 def generate_pdf_report(graphql_query: str, json_result: dict, output_filename: str = "report.pdf"):
     """
     Generates a PDF report from a GraphQL query and its JSON result.
@@ -42,7 +54,7 @@ def generate_pdf_report(graphql_query: str, json_result: dict, output_filename: 
     :param json_result: The JSON response from the GraphQL API
     :param output_filename: The name of the output PDF file
     """
-    doc = SimpleDocTemplate(output_filename, pagesize=A4)
+    doc = SimpleDocTemplate(output_filename, pagesize=A3)
     elements = []
     styles = getSampleStyleSheet()
     
@@ -69,8 +81,11 @@ def generate_pdf_report(graphql_query: str, json_result: dict, output_filename: 
         for record in flattened_records:
             table_data.append([str(record.get(col, '')) for col in headers])
         
+        # Calculate the column widths based on the header title length
+        column_widths = calculate_column_widths(headers)
+        
         # Create table with styling
-        table = Table(table_data)
+        table = Table(table_data, colWidths=column_widths)
         style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
