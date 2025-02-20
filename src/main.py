@@ -1,154 +1,70 @@
-# Fetch {number_of_records} {main_entity}  
-# where {filter_conditions}  
-# including {fields_to_fetch}  
-# {optional_sorting_and_pagination} 
-
-# Fetch {number_of_records} {main_entity}  
-# where {filter_conditions}  
-# including {fields_to_fetch_from_main_entity}  
-# and {fields_to_fetch_from_related_entities} from {related_entities}  
-# {optional_sorting_and_pagination}  
-
-from model import model
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema.output_parser import StrOutputParser
-from graphql_client import execute_graphql_query
-from prompt import escaped_system_prompt, error_resolver_prompt
-from report_generator import create_pdf_report
-from query_extractor import extract_graphql_query, query_extractor_lambda
-from query_validator import validate_graphql_query, get_escaped_validation_result
-from schema_provider import get_escaped_schema, get_schema
-from report_generator_v2 import generate_pdf_report
 from entity_constants import *
-# main_entity = "accounts"
-# fields = "id, number, type"
+from report_generator_v2 import generate_pdf_report
+from strict_user_input_generator import generate_strict_user_input
+from query_generator import get_query_for_user_input
+from graphql_client import execute_graphql_query
+from fastapi import HTTPException, FastAPI
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 
-# user_input_strict = f"""
-# Fetch 3 {main_entity}  
-# where customer name started with d or domestic account
-# including {fields}
-# sort based on account type in decending order.
-# """
+app = FastAPI()
 
-# main_entity = "customers"
-# fields = "id, name, identityNumber, age"
 
-# user_input_strict = f"""
-# Fetch {main_entity}  
-# where all accounts are active
-# including {fields}
-# """
+# main_entity = BILLS
+# fields_to_fetch_from_main_entity = "number, month, dueDate, amount"
+# fields_to_fetch_from_related_entity_1 = "name, identityNumber, age"
+# related_entity_1 = CUSTOMERS
+# fields_to_fetch_from_related_entity_2 = "id, number, type"
+# related_entity_2 = ACCOUNTS
+# or_condition_1 = "customer name starts with d"
+# or_condition_2 = "account type is domestic "
+# and_condition_1 = "bill amount is greater than 1000"
+# sort_field_1 = "customer name"
+# sort_order_1 = "decending"
 
-# main_entity = ACCOUNTS
-# fields_to_fetch_from_main_entity = "id, number, type"
-# fields_to_fetch_from_related_entities = "name, identityNumber, age"
-# related_entities = CUSTOMERS
 
-# user_input_strict = f"""
-# Fetch all {main_entity}  
-# where customer name started with d or domestic account  
-# including {fields_to_fetch_from_main_entity}  
-# and {fields_to_fetch_from_related_entities} from {related_entities}   
-# """
+# or_conditions = []
+# and_conditions = []
+# related_entity_fields = {}
+# sort_field_order = {}
 
-main_entity = BILLS
-fields_to_fetch_from_main_entity = "number, month, dueDate, amount"
-fields_to_fetch_from_related_entity_1 = "name, identityNumber, age"
-related_entity_1 = CUSTOMERS
-fields_to_fetch_from_related_entity_2 = "id, number, type"
-related_entity_2 = ACCOUNTS
-or_condition_1 = "customer name starts with d"
-or_condition_2 = "account type is domestic "
-and_condition_1 = "bill amount is greater than 1000"
-sort_field_1 = "customer name"
-sort_order_1 = "decending"
-# user_input_strict = f"""
-# Fetch all {main_entity}  
-# where customer name started with d or domestic account and bill amount is greater than 1000 
-# including {fields_to_fetch_from_main_entity}  
-# and {fields_to_fetch_from_related_entities1} from {related_entities1}   
-# and {fields_to_fetch_from_related_entities2} from {related_entities2}
-# sort based on customer name in decending order.
-# """
+# or_conditions.append(or_condition_1)
+# or_conditions.append(or_condition_2)
+# and_conditions.append(and_condition_1)
+# related_entity_fields[related_entity_1] = fields_to_fetch_from_related_entity_1
+# related_entity_fields[related_entity_2] = fields_to_fetch_from_related_entity_2
+# sort_field_order[sort_field_1] = sort_order_1
 
-user_input_strict = f"""
-Fetch all {main_entity} where:
-- Any of the following must be true:  
-  - {or_condition_1}  
-  - {or_condition_2}  
-  
-- And all of the following must be true:  
-  - {and_condition_1}  
+class ReportRequest(BaseModel):
+    main_entity: str
+    fields_to_fetch_from_main_entity: Optional[str] = None
+    or_conditions: Optional[List[str]] = None
+    and_conditions: Optional[List[str]] = None
+    related_entity_fields: Optional[Dict[str, str]] = None
+    sort_field_order: Optional[Dict[str, str]] = None
 
-Include the following fields:  
-- **{main_entity}**: {fields_to_fetch_from_main_entity}  
-- **{related_entity_1}**: {fields_to_fetch_from_related_entity_1}  
-- **{related_entity_2}**: {fields_to_fetch_from_related_entity_2}  
 
-Sort results by:
-- **{sort_field_1}** in **{sort_order_1}** order   
-"""
+@app.post("/generate-report")
+def generate_query(request: ReportRequest):
 
-print(user_input_strict)
+    user_input_strict = generate_strict_user_input(
+        request.main_entity, request.fields_to_fetch_from_main_entity, request.or_conditions, request.and_conditions, request.related_entity_fields, request.sort_field_order
+    )
 
-full_system_prompt = escaped_system_prompt + "\n### GraphQL Schema:\n" + get_escaped_schema(main_entity)
+    query, validation = get_query_for_user_input(user_input_strict, request.main_entity)
 
-# Define prompt templates
-prompt_template = ChatPromptTemplate.from_messages(
-    [
-        ("system", full_system_prompt),
-        ("human", "{userInput}"),
-    ]
-)
+    if validation:
+        raise HTTPException(status_code=400, detail="Could not resolve the query. Please try again.")
 
-initial_chain = prompt_template | model | StrOutputParser() 
+    json_data = execute_graphql_query(query)
+    print(json_data)
 
-complete_chain = initial_chain | query_extractor_lambda
+    #create_pdf_report(main_entity, fields,json_data,"pdf_2")
+    generate_pdf_report(query, json_data,"pdf_2")
 
-process_retry_count = 0
-process_max_retries = 3
+    return JSONResponse(status_code=201, content={"message": "PDF generated"})
 
-while True and process_retry_count < process_max_retries:
-    print("Resolving the query...")
-    result_query = complete_chain.invoke({"userInput": user_input_strict})
-
-    # Validate the query
-    validation_result = validate_graphql_query(result_query, get_schema(main_entity))
-
-    final_query = result_query
-
-    escaped_result_query = result_query.replace("{", "{{").replace("}", "}}")
-
-    retry_count = 0
-    max_retries = 3
-
-    while validation_result and retry_count < max_retries:
-        print(f"validation retry: {retry_count}")
-        error_resolver_prompt_template = ChatPromptTemplate.from_messages(
-            [
-                ("system", error_resolver_prompt + "\n**GraphQL Query:**\n" + escaped_result_query + "\n**Validation Error:**\n" + get_escaped_validation_result(validation_result) + "\n### GraphQL Schema:\n" + get_escaped_schema(main_entity)),
-                ("human", "{userInput}"),
-            ]
-        )
-
-        error_resolver_chain = error_resolver_prompt_template | model | StrOutputParser()
-
-        resolver_result = error_resolver_chain.invoke({"userInput": user_input_strict})
-        final_query = extract_graphql_query(resolver_result)
-        validation_result = validate_graphql_query(final_query, get_schema(main_entity))
-        retry_count += 1
-
-    if not validation_result:
-        break
-
-    if validation_result and retry_count == max_retries:
-        print("Max retries reached. Could not resolve the query.Restating the process...")
-        process_retry_count += 1
-
-print(final_query)
-
-json_data = execute_graphql_query(final_query)
-print(json_data)
-
-#create_pdf_report(main_entity, fields,json_data,"pdf_2")
-generate_pdf_report(final_query, json_data,"pdf_2")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
