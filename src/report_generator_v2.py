@@ -22,6 +22,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from io import BytesIO
 import json
 
 def flatten_record(record, parent_key='', sep='.'):
@@ -47,14 +48,14 @@ def calculate_column_widths(headers, font_name='Helvetica', font_size=10):
         widths.append(width + 10)  # Add some padding
     return widths
 
-def generate_pdf_report(graphql_query: str, json_result: dict, output_filename: str = "report.pdf"):
+def generate_pdf_report(graphql_query: str, json_result: dict):
     """
     Generates a PDF report from a GraphQL query and its JSON result.
     :param graphql_query: The GraphQL query used to fetch data
     :param json_result: The JSON response from the GraphQL API
-    :param output_filename: The name of the output PDF file
     """
-    doc = SimpleDocTemplate(output_filename, pagesize=A3)
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=A3)
     elements = []
     styles = getSampleStyleSheet()
     
@@ -100,4 +101,7 @@ def generate_pdf_report(graphql_query: str, json_result: dict, output_filename: 
     
     # Build PDF
     doc.build(elements)
-    print(f"PDF report generated: {output_filename}")
+    pdf_buffer.seek(0)  # Reset buffer position
+    
+    print(f"PDF report generated")
+    return pdf_buffer

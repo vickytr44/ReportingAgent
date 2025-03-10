@@ -4,7 +4,7 @@ from strict_user_input_generator import generate_strict_user_input
 from query_generator import get_query_for_user_input
 from graphql_client import execute_graphql_query
 from fastapi import HTTPException, FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,9 +68,8 @@ def generate_query(request: ReportRequest):
     print(json_data)
 
     #create_pdf_report(main_entity, fields,json_data,"pdf_2")
-    generate_pdf_report(query, json_data,"pdf_2")
-
-    return JSONResponse(status_code=201, content={"message": "PDF generated"})
+    pdf_stream = generate_pdf_report(query, json_data)
+    return StreamingResponse(pdf_stream, media_type="application/pdf", headers={"Content-Disposition": "attachment"})
 
 if __name__ == "__main__":
     import uvicorn
