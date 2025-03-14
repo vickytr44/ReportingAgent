@@ -38,15 +38,19 @@ def flatten_record(record, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
-def calculate_column_widths(headers, font_name='Helvetica', font_size=10):
+def calculate_column_widths(records, headers, font_name='Helvetica', font_size=10):
     """
-    Calculate the width of each column based on the header title length.
+    Calculate the width of each column based on the header title and column length.
+    TO-DO: Improve the calculation
     """
-    widths = []
-    for header in headers:
-        width = pdfmetrics.stringWidth(header, font_name, font_size)
-        widths.append(width + 10)  # Add some padding
-    return widths
+    column_widths = [pdfmetrics.stringWidth(header, font_name, font_size) + 10 for header in headers]
+
+    for record in records:
+        for i, header in enumerate(headers):
+            value = str(record.get(header, ''))
+            column_widths[i] = max(column_widths[i], pdfmetrics.stringWidth(value, font_name, font_size) + 10)
+            
+    return column_widths
 
 def generate_pdf_report(graphql_query: str, json_result: dict):
     """
@@ -82,8 +86,8 @@ def generate_pdf_report(graphql_query: str, json_result: dict):
         for record in flattened_records:
             table_data.append([str(record.get(col, '')) for col in headers])
         
-        # Calculate the column widths based on the header title length
-        column_widths = calculate_column_widths(headers)
+        # Calculate the column widths based on the header title and column data length
+        column_widths = calculate_column_widths(records, headers)
         
         # Create table with styling
         table = Table(table_data, colWidths=column_widths)
