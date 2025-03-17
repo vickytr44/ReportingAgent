@@ -64,6 +64,8 @@ def generate_query(request: ReportRequest):
     if validation:
         raise HTTPException(status_code=400, detail="Could not resolve the query. Please try again.")
 
+    print(query)
+    
     json_data = execute_graphql_query(query)
     print(json_data)
 
