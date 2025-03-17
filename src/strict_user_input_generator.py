@@ -70,36 +70,45 @@ from entity_constants import *
 # """
 
 def generate_strict_user_input(main_entity : str, fields_to_fetch_from_main_entity : str , or_conditions : list, and_conditions : list, related_entity_fields : dict, sort_field_order : dict) -> str:
+    
+    or_condition_line = ""
+    and_condition_line = ""
+    sort_line = ""
+
     first_line = f"""
     Fetch all {main_entity} where:"""
 
-    or_condition_line = f"""
-    - Any of the following must be true:"""
+    if(or_conditions):
+        or_condition_line = f"""
+        - Any of the following must be true:"""
 
-    for condition in or_conditions:
-        or_condition_line += f"""
-    - {condition}""" 
+        for condition in or_conditions:
+            or_condition_line += f"""
+        - {condition}""" 
         
-    and_condition_line = f"""
-    - And all of the following must be true:"""
-    for condition in and_conditions:
-        and_condition_line += f"""
-    - {condition}"""
+    if(and_conditions):
+        and_condition_line = f"""
+        - And all of the following must be true:"""
+        for condition in and_conditions:
+            and_condition_line += f"""
+        - {condition}"""
 
     include_fields_line = f"""
     Include the following fields:
     - **{main_entity}**: {fields_to_fetch_from_main_entity}"""
 
-    for related_entity, fields in related_entity_fields.items():
-        include_fields_line += f"""
-    - **{related_entity}**: {fields}"""
+    if(related_entity_fields):
+        for related_entity, fields in related_entity_fields.items():
+            include_fields_line += f"""
+        - **{related_entity}**: {fields}"""
 
-    sort_line = f"""
-    Sort results by:"""
+    if(sort_field_order):
+        sort_line = f"""
+        Sort results by:"""
 
-    for field, order in sort_field_order.items():
-        sort_line += f"""
-    - **{field}** in **{order}** order"""
+        for field, order in sort_field_order.items():
+            sort_line += f"""
+        - **{field}** in **{order}** order"""
         
     user_input_strict = first_line + "\n" + or_condition_line + "\n" + and_condition_line + "\n" + include_fields_line + "\n" + sort_line
 

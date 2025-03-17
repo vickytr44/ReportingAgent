@@ -58,6 +58,8 @@ def generate_query(request: ReportRequest):
     user_input_strict = generate_strict_user_input(
         request.main_entity, request.fields_to_fetch_from_main_entity, request.or_conditions, request.and_conditions, request.related_entity_fields, request.sort_field_order
     )
+    
+    print(user_input_strict)
 
     query, validation = get_query_for_user_input(user_input_strict, request.main_entity)
 
@@ -65,7 +67,7 @@ def generate_query(request: ReportRequest):
         raise HTTPException(status_code=400, detail="Could not resolve the query. Please try again.")
 
     print(query)
-    
+
     json_data = execute_graphql_query(query)
     print(json_data)
 
