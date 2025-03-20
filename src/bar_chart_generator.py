@@ -23,7 +23,7 @@ def plot_bar_chart(json_data : dict, x_label, y_label, title):
     plt.title(title)
     
     # Rotate x-axis labels for better visibility
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=30)
     
     # Save to PDF buffer
     pdf_buffer = BytesIO()
