@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
+from bar_chart_generator import plot_bar_chart
 
 app = FastAPI()
 app.add_middleware(
@@ -51,6 +52,16 @@ class ReportRequest(BaseModel):
     related_entity_fields: Optional[Dict[str, str]] = None
     sort_field_order: Optional[Dict[str, str]] = None
 
+class BarChartRequest(BaseModel):
+    main_entity: str
+    fields_to_fetch_from_main_entity: Optional[str] = None
+    or_conditions: Optional[List[str]] = None
+    and_conditions: Optional[List[str]] = None
+    sort_field_order: Optional[Dict[str, str]] = None
+    x_label: str
+    y_label: str
+    title: str
+
 
 @app.post("/generate-report")
 def generate_query(request: ReportRequest):
@@ -74,6 +85,29 @@ def generate_query(request: ReportRequest):
     #create_pdf_report(main_entity, fields,json_data,"pdf_2")
     pdf_stream = generate_pdf_report(query, json_data)
     return StreamingResponse(pdf_stream, media_type="application/pdf", headers={"Content-Disposition": "attachment"})
+
+@app.post("/bar-chart")
+def generate_query(request: BarChartRequest):
+
+    user_input_strict = generate_strict_user_input(
+        request.main_entity, request.fields_to_fetch_from_main_entity, request.or_conditions, request.and_conditions, {}, request.sort_field_order
+    )
+    
+    print(user_input_strict)
+
+    query, validation = get_query_for_user_input(user_input_strict, request.main_entity)
+
+    if validation:
+        raise HTTPException(status_code=400, detail="Could not resolve the query. Please try again.")
+
+    print(query)
+
+    json_data = execute_graphql_query(query)
+    print(json_data)
+
+    pdf_stream = plot_bar_chart(json_data, request.x_label, request.y_label, request.title)
+    return StreamingResponse(pdf_stream, media_type="application/pdf", headers={"Content-Disposition": "attachment"})
+
 
 if __name__ == "__main__":
     import uvicorn
